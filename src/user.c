@@ -2,6 +2,7 @@
 #include <string.h>
 #include "user.h"
 
+#include <cpu.h>
 #include <limits.h>
 #include <process.h>
 #include <stdlib.h>
@@ -55,38 +56,33 @@ void handle_user_command(const char *command) {
         printf("  exit          - Exit the OS simulation\n");
         printf("  help          - Display this help message\n");
     } else if (strncmp(command, "run ", 4) == 0) {
-        // Extract program name
-        const char *program_name = command + 4;
-
-        // Create a new process
-        static int pid_counter = 1; // Simple PID generator
-        create_process(pid_counter++, 10); // Default 10 cycles for a new program
-        printf("Running program: %s (PID=%d)\n", program_name, pid_counter - 1);
-    } else if (strcmp(command, "ps") == 0) {
-        // Display all running processes
-        Process *curr = process_queue.head;
-        printf("PID\tState\t\tTime Remaining\n");
-        while (curr) {
-            printf("%d\t%s\t\t%d\n", curr->pid,
-                   curr->state == READY
-                       ? "Ready"
-                       : curr->state == RUNNING
-                             ? "Running"
-                             : curr->state == BLOCKED
-                                   ? "Blocked"
-                                   : "Terminated",
-                   curr->time_remaining);
-            curr = curr->next;
+        // Create a new process with a specified execution time
+        char *time_str = (char *) (command + 4);
+        int time_required = atoi(time_str);
+        if (time_required > 0) {
+            static int pid_counter = 1; // Simple PID generator
+            create_process(pid_counter++, time_required);
+        } else {
+            printf("Error: Invalid time specified.\n");
         }
+    } else if (strcmp(command, "ps") == 0) {
+        // List all processes
+        list_processes_and_threads();
     } else if (strncmp(command, "kill ", 5) == 0) {
         // Terminate a process by PID
-        char *endptr;
-        const long pid = strtol(command + 5, &endptr, 10);
-        if (*endptr == '\0' && pid <= INT_MAX && pid >= INT_MIN) {
+        int pid = atoi(command + 5);
+        if (pid > 0) {
             terminate_process(pid);
         } else {
-            printf("Invalid PID: %s\n", command + 5);
+            printf("Error: Invalid PID specified.\n");
         }
+    } else if (strcmp(command, "step") == 0) {
+        // Step the CPU by one cycle
+        execute_cpu_cycle();
+    } else if (strcmp(command, "exit") == 0) {
+        // Exit the simulation
+        printf("Exiting OS simulation.\n");
+        exit(0);
     } else if (strncmp(command, "touch ", 6) == 0) {
         sys_create_file(command + 6);
     } else if (strncmp(command, "echo ", 5) == 0) {
@@ -139,6 +135,17 @@ void handle_user_command(const char *command) {
             sys_rename(old_name, new_name);
         } else {
             printf("Error: Invalid rename syntax. Use 'rename <old_name> <new_name>'.\n");
+        }
+    } else if (strncmp(command, "thread ", 7) == 0) {
+        int pid, time_required;
+        sscanf(command + 7, "%d %d", &pid, &time_required);
+
+        Process *process = find_process_by_pid(pid);
+        if (process == NULL) {
+            printf("Error: Process PID=%d not found.\n", pid);
+        } else {
+            static int tid_counter = 1; // Simple TID generator
+            // create_thread(&process->threads, tid_counter++, time_required, dummy_thread_task, NULL);
         }
     } else {
         printf("Unknown command: %s\n", command);

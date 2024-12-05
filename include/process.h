@@ -1,40 +1,44 @@
 #ifndef PROCESS_H
 #define PROCESS_H
+#include <thread.h>
 
-// Process states
 typedef enum {
     READY,
     RUNNING,
-    BLOCKED,
     TERMINATED
 } ProcessState;
 
-// Process structure
 typedef struct Process {
-    int pid; // Process ID
-    int time_remaining; // Remaining execution time
-    ProcessState state; // Current state
-    struct Process *next; // Next process in the queue
+    int pid;
+    int time_remaining;
+    ProcessState state;
+    ThreadQueue threads;
+    struct Process *next;
 } Process;
 
-// Process queue
 typedef struct {
     Process *head;
     Process *tail;
 } ProcessQueue;
 
-// Global process queue
 extern ProcessQueue process_queue;
 
-// Functions
-Process *create_process(int pid, int execution_time);
+extern Process *current_process;
 
-void enqueue_process(Process *process);
+void initialize_process_queue();
+
+void create_process(int pid, int time_required);
 
 Process *dequeue_process();
 
-Process *get_next_ready_process();
+void enqueue_process(Process *process);
 
 void terminate_process(int pid);
+
+void list_processes_and_threads();
+
+void schedule_next_process();
+
+Process *find_process_by_pid(int pid);
 
 #endif

@@ -3,4 +3,6 @@
 
 void initialize_kernel();
 
+void handle_interrupt(int interrupt_type);
+
 #endif

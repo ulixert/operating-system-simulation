@@ -23,8 +23,6 @@ int main() {
         return 1;
     }
 
-    initialize_cpu();
-
     printf("Welcome to the OS Simulation!\n");
     initialize_kernel();
     user_shell();
