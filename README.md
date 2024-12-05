@@ -1,13 +1,15 @@
 # OS Simulation Project README
 
-This README provides detailed instructions on how to set up, build, and run the OS Simulation project both locally and
-using Docker. It also addresses common issues and provides troubleshooting tips.
+This README provides updated instructions for the OS Simulation project, reflecting recent changes where interrupts are
+implemented and the CPU and kernel continue to operate dynamically after initialization. The CPU loop now uses shorter
+sleep intervals, resulting in faster increments of CPU time and more responsive process state transitions.
 
 ## Table of Contents
 
 - [Project Overview](#project-overview)
 - [Prerequisites](#prerequisites)
 - [Project Structure](#project-structure)
+- [Quick Start](#quick-start)
 - [Building and Running Locally](#building-and-running-locally)
     - [Compilation](#compilation)
     - [Running the Simulation](#running-the-simulation)
@@ -21,12 +23,19 @@ using Docker. It also addresses common issues and provides troubleshooting tips.
 - [Troubleshooting](#troubleshooting)
     - [Docker Compose Input Handling](#docker-compose-input-handling)
 - [Additional Notes](#additional-notes)
+- [Example Usage](#example-usage)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Project Overview
 
-The OS Simulation project is a simplified operating system simulation written in C. It provides a shell interface where
-users can execute commands to interact with a simulated file system, manage processes and threads, and perform basic
-operations similar to those found in a Unix-like environment.
+The OS Simulation project emulates core functionalities of an operating system in a simplified environment. With
+interrupts implemented, the CPU and kernel now run continuously after initialization. A periodic timer interrupt
+triggers scheduling, allowing processes and threads to rotate through various states, accumulate CPU time, and terminate
+as their time elapses.
+
+By decreasing sleep intervals in the CPU loop (e.g., from 1 second to a few milliseconds), you’ll see processes gain CPU
+time and change states much more rapidly, making the simulation feel closer to a real OS.
 
 ## Prerequisites
 
@@ -37,18 +46,29 @@ operations similar to those found in a Unix-like environment.
 
 ## Project Structure
 
-The project is organized into the following directories and files:
+The project is organized as follows:
 
 - `src/`: Contains the source code files.
 - `include/`: Contains header files.
 - `bin/`: Compiled binary executables are placed here after building.
 - `Makefile`: Build configuration for compiling the project.
 
+## Quick Start
+
+Clone this repository:
+
+   ```sh
+   git clone https://github.com/ulixert/os-simulation.git
+   cd os-simulation
+   ```
+
+You can now build and run the OS Simulation project locally or with Docker.
+
 ## Building and Running Locally
 
 ### Compilation
 
-To build the OS Simulation project locally, navigate to the project's root directory and run:
+To build the OS Simulation project locally:
 
 ```
 make clean
@@ -62,19 +82,19 @@ The compiled binary will be placed in the `bin/` directory.
 
 ### Running the Simulation
 
-To run the OS Simulation:
+Run the OS Simulation:
 
 ```
 ./bin/os_simulation
 ```
 
-This will start the simulation and present you with the user shell interface.
+This starts the simulation and presents the user shell. You can now observe processes and threads dynamically changing.
 
 ## Building and Running with Docker
 
 ### Docker Setup
 
-Ensure you have Docker installed on your system. You can verify the installation by running:
+Check Docker installation:
 
 ```
 docker --version
@@ -82,7 +102,7 @@ docker --version
 
 ### Building the Docker Image
 
-Build the Docker image using the provided `Dockerfile`:
+Build the Docker image:
 
 ```
 docker build -t os_simulation .
@@ -90,144 +110,119 @@ docker build -t os_simulation .
 
 ### Running the Simulation in Docker
 
-When using Docker Compose, you might encounter issues with interactive input not behaving correctly if you use:
-
-```
-docker compose up
-```
-
-To fix this issue, always use:
+When using Docker Compose:
 
 ```
 docker compose run os_simulation
 ```
 
-This command ensures that the simulation runs interactively, allowing you to enter commands in the shell interface.
-
-Alternatively, you can run the container directly using `docker run`:
+ensures interactive functionality. Alternatively:
 
 ```
 docker run -it os_simulation
 ```
 
-## Available Commands
+runs the simulation in an interactive terminal.
 
-Within the OS Simulation shell, you can use the following commands:
+## Available Commands
 
 ### File System Commands
 
-- `ls`: List unhidden files and directories.
-- `ls -a`: List all files and directories, including hidden ones.
-- `touch <file>`: Create a new file.
-- `rm <file>`: Delete a file.
-- `mkdir <dir>`: Create a new directory.
-- `rmdir <dir>`: Remove an empty directory.
-- `cd <dir>`: Change the current directory. Use `cd` or `cd ~` to return to the project root.
-- `mv <src> <dest>`: Move or rename a file or directory.
-- `rename <old> <new>`: Rename a file or directory.
-- `echo "message" > <file>`: Write a message to a file.
-- `cat <file>`: Display the contents of a file.
+- `ls`, `ls -a`
+- `touch <file>`
+- `rm <file>`
+- `mkdir <dir>`
+- `rmdir <dir>`
+- `cd <dir>` (use `cd` or `cd ~` to go home)
+- `mv <src> <dest>`
+- `rename <old> <new>`
+- `echo "message" > <file>`
+- `cat <file>`
 
 ### Process and Thread Commands
 
 - `ps`: List all processes and threads.
-- `kill <pid>`: Terminate a process by its process ID.
-- `run <command> <time>`: Create a new process. Time is in seconds; omit or use `-1` for infinite.
-- `thread <pid> <time>`: Create a new thread in a process. Time is in seconds; omit or use `-1` for infinite.
+- `kill <pid>`: Terminate a process.
+- `run <command> <time>`: Create a new process (time in seconds, `-1` for infinite).
+- `thread <pid> <time>`: Create a new thread in a process (time in seconds, `-1` for infinite).
 
 ### Other Commands
 
-- `exit`: Exit the OS Simulation shell.
-- `help`: Display the help message with available commands.
+- `exit`: Exit the simulation.
+- `help`: Display available commands.
 
 ## Troubleshooting
 
 ### Docker Compose Input Handling
 
-When using Docker Compose, you might encounter issues with interactive input not behaving correctly if you use:
+If interactive input fails with:
 
 ```
 docker compose up
 ```
 
-To fix this, use the following command instead:
+use:
 
 ```
 docker compose run os_simulation
 ```
 
-This ensures that the container runs interactively, allowing you to enter commands in the shell.
+for proper interactivity.
 
 ## Additional Notes
 
-- The simulation includes both system processes and user-created processes and threads.
-- Processes and threads may have finite or infinite execution times.
-- Use the `ps` command to monitor the state of processes and threads.
-- The simulation supports basic file system operations within the project directory.
+- Interrupts now drive scheduling, causing processes to run or yield frequently.
+- Shortened sleep intervals in the CPU loop result in quicker CPU time increments and more dynamic state changes.
+- To gracefully stop the CPU thread and finalize the simulation, call `finalize_cpu()` after `user_shell()` returns.
 
 ## Example Usage
 
-### Creating and Managing Processes
+Creating and managing processes:
 
-1. **Create a new process:**
+```
+run my_process 10
+```
 
-   ```
-   run my_process 10
-   ```
+List processes:
 
-2. **List processes and threads:**
+```
+ps
+```
 
-   ```
-   ps
-   ```
+Terminate a process:
 
-3. **Terminate a process:**
+```
+kill 121
+```
 
-   ```
-   kill 121
-   ```
+File operations:
 
-### File Operations
+```
+touch newfile.txt
+```
 
-1. **Create a new file:**
+```
+echo "Hello, World!" > newfile.txt
+```
 
-   ```
-   touch newfile.txt
-   ```
+```
+cat newfile.txt
+```
 
-2. **Write to a file:**
-
-   ```
-   echo "Hello, World!" > newfile.txt
-   ```
-
-3. **Read a file:**
-
-   ```
-   cat newfile.txt
-   ```
-
-4. **Delete a file:**
-
-   ```
-   rm newfile.txt
-   ```
-
---- 
+```
+rm newfile.txt
+```
 
 ## Contributing
 
 1. Fork the repository.
 2. Create a new branch (`feature-branch-name`).
-3. Commit your changes.
+3. Commit changes.
 4. Push to the branch.
 5. Open a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License. See `LICENSE` for details.
+Licensed under the MIT License. See `LICENSE` for details.
 
-
----
-
-Enjoy exploring the OS Simulation project!
+Enjoy exploring the enhanced OS Simulation project, now with interrupts and more dynamic CPU and kernel behavior!
