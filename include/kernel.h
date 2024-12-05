@@ -3,6 +3,6 @@
 
 void initialize_kernel();
 
-void handle_interrupt(int interrupt_type);
+void system_process_function(void *arg);
 
 #endif

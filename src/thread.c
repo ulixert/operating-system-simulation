@@ -1,30 +1,39 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "thread.h"
 
-#include <unistd.h>
-
-// Initialize the thread queue
 void initialize_thread_queue(ThreadQueue *queue) {
     queue->head = NULL;
     queue->tail = NULL;
+    pthread_mutex_init(&queue->mutex, NULL);
 }
 
-// Create a new thread and add it to the thread queue
-void create_thread(ThreadQueue *queue, int tid, int time_required, void (*function)(void *), void *arg) {
+void create_thread(ThreadQueue *queue, int tid, int time_required, void (*function)(void *), void *arg,
+                   const char *command) {
     Thread *new_thread = (Thread *) malloc(sizeof(Thread));
+    if (new_thread == NULL) {
+        printf("Error: Failed to allocate memory for thread.\n");
+        return;
+    }
     new_thread->tid = tid;
     new_thread->time_remaining = time_required;
+    new_thread->cpu_time_used = 0;
     new_thread->state = THREAD_READY;
     new_thread->function = function;
     new_thread->arg = arg;
     new_thread->next = NULL;
 
+    snprintf(new_thread->command, sizeof(new_thread->command), "%s", command);
+
+    pthread_mutex_lock(&queue->mutex);
     enqueue_thread(queue, new_thread);
-    printf("Thread created: TID=%d, Time Required=%d\n", tid, time_required);
+    pthread_mutex_unlock(&queue->mutex);
+
+    // Optionally print thread creation
+    // printf("Thread created: TID=%d, Time Required=%d, Command=%s\n", tid, time_required, command);
 }
 
-// Enqueue a thread to the thread queue
 void enqueue_thread(ThreadQueue *queue, Thread *thread) {
     thread->next = NULL;
     if (queue->tail == NULL) {
@@ -35,9 +44,9 @@ void enqueue_thread(ThreadQueue *queue, Thread *thread) {
     queue->tail = thread;
 }
 
-// Dequeue a thread from the thread queue
 Thread *dequeue_thread(ThreadQueue *queue) {
-    if (queue->head == NULL) return NULL;
+    if (queue->head == NULL)
+        return NULL;
 
     Thread *thread = queue->head;
     queue->head = queue->head->next;
@@ -49,57 +58,70 @@ Thread *dequeue_thread(ThreadQueue *queue) {
     return thread;
 }
 
-// Execute the next thread in the thread queue
 void execute_thread(ThreadQueue *queue) {
-    Thread *thread = dequeue_thread(queue);
-    if (thread == NULL) {
-        printf("No threads to execute.\n");
+    pthread_mutex_lock(&queue->mutex);
+
+    if (queue->head == NULL) {
+        pthread_mutex_unlock(&queue->mutex);
         return;
     }
 
+    Thread *thread = queue->head;
     thread->state = THREAD_RUNNING;
-    printf("Executing Thread TID=%d\n", thread->tid);
+
+    pthread_mutex_unlock(&queue->mutex);
 
     // Simulate thread execution
     thread->function(thread->arg);
     thread->time_remaining--;
+    thread->cpu_time_used++;
 
-    if (thread->time_remaining > 0) {
-        thread->state = THREAD_READY;
-        enqueue_thread(queue, thread); // Requeue the thread
+    pthread_mutex_lock(&queue->mutex);
+
+    if (thread->time_remaining > 0 || thread->time_remaining == -1) {
+        thread->state = THREAD_SLEEPING; // Simulate state change
+        // Move the thread to the end of the queue
+        queue->head = thread->next;
+        thread->next = NULL;
+        if (queue->tail) {
+            queue->tail->next = thread;
+            queue->tail = thread;
+        } else {
+            queue->head = queue->tail = thread;
+        }
     } else {
         thread->state = THREAD_TERMINATED;
-        printf("Thread TID=%d terminated.\n", thread->tid);
+        // Remove thread from queue
+        if (queue->head == thread) {
+            queue->head = thread->next;
+        }
         free(thread);
     }
+
+    pthread_mutex_unlock(&queue->mutex);
 }
 
-// System threads
-void io_handler_thread(void *arg) {
-    while (1) {
-        printf("I/O Handler: Managing I/O operations.\n");
-        sleep(2); // Simulate periodic checks
+const char *thread_state_to_string(ThreadState state) {
+    switch (state) {
+        case THREAD_READY:
+            return "Ready";
+        case THREAD_RUNNING:
+            return "Running";
+        case THREAD_SLEEPING:
+            return "Sleeping";
+        case THREAD_TERMINATED:
+            return "Terminated";
+        default:
+            return "Unknown";
     }
 }
 
-void logger_thread(void *arg) {
-    while (1) {
-        printf("Logger: Writing system logs.\n");
-        sleep(3); // Simulate periodic logging
-    }
+void execute_idle_thread() {
+    // Simulate idle time
+    usleep(50000); // 50ms
 }
 
-void resource_monitor_thread(void *arg) {
-    while (1) {
-        printf("Resource Monitor: Checking system resources.\n");
-        sleep(5); // Simulate periodic monitoring
-    }
-}
-
-// read-only threads
-void idle_thread(void *arg) {
-    while (1) {
-        printf("Idle: CPU is idle.\n");
-        sleep(1); // Simulate idle time
-    }
+void dummy_thread_task(void *arg) {
+    // Simulate work
+    usleep(50000); // 50ms
 }

@@ -1,12 +1,13 @@
-#include <stdio.h>
 #include "interrupt.h"
-#include "kernel.h"
+#include <stdio.h>
 
-void initialize_interrupts() {
-    printf("Interrupt system initialized.\n");
-}
+// Global interrupt flag
+int interrupt_flag = 0;
 
-void timer_interrupt() {
-    printf("Interrupt: Timer interrupt.\n");
-    handle_interrupt(TIMER_INTERRUPT);
+void handle_interrupts() {
+    if (interrupt_flag) {
+        printf("Handling interrupt.\n");
+        // Handle the interrupt (placeholder)
+        interrupt_flag = 0; // Reset interrupt flag
+    }
 }

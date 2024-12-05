@@ -1,28 +1,64 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <pthread.h>
 #include "cpu.h"
-#include "interrupt.h"
 #include "process.h"
-
-#define TIME_SLICE 3 // Cycles per process
+#include "thread.h"
+#include "interrupt.h"
 
 void execute_cpu_cycle() {
-    static int cycles = 0;
+    if (!current_process || current_process->state != RUNNING || current_process->time_slice <= 0) {
+        schedule_next_process();
+    }
 
-    if (current_process != NULL) {
-        printf("CPU: Executing PID=%d\n", current_process->pid);
-        current_process->time_remaining--;
+    if (current_process) {
+        // Execute the process's threads
+        if (current_process->threads.head) {
+            execute_thread(&current_process->threads);
+        }
 
-        cycles++;
-        if (current_process->time_remaining <= 0) {
-            printf("CPU: Process PID=%d completed.\n", current_process->pid);
+        // Decrement time slices
+        if (current_process->time_remaining > 0) {
+            current_process->time_remaining--;
+        }
+        current_process->time_slice--;
+        current_process->cpu_time_used++; // Increment CPU time used
+
+        // Check if process has completed
+        if (current_process->time_remaining == 0) {
+            current_process->state = TERMINATED;
             terminate_process(current_process->pid);
-            cycles = 0;
-        } else if (cycles >= TIME_SLICE) {
-            printf("CPU: Time slice expired for PID=%d. Triggering timer interrupt.\n", current_process->pid);
-            timer_interrupt(); // Trigger timer interrupt
-            cycles = 0;
+            current_process = NULL;
         }
     } else {
-        printf("CPU: Idle.\n");
+        // No process to execute, CPU is idle
+        execute_idle_thread();
     }
+}
+
+void schedule_next_process() {
+    pthread_mutex_lock(&process_queue.mutex);
+
+    if (current_process && current_process->state != TERMINATED) {
+        if (current_process->time_slice <= 0) {
+            current_process->state = READY;
+            current_process->time_slice = TIME_SLICE;
+            enqueue_process(current_process);
+            current_process = NULL;
+        }
+    }
+
+    if (!current_process) {
+        current_process = dequeue_process();
+        if (current_process) {
+            current_process->state = RUNNING;
+            current_process->time_slice = TIME_SLICE;
+        }
+    }
+
+    pthread_mutex_unlock(&process_queue.mutex);
+}
+
+void handle_system_events() {
+    handle_interrupts();
 }

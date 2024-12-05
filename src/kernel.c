@@ -1,30 +1,50 @@
-#include <stdio.h>
 #include "kernel.h"
-
-#include <interrupt.h>
-
 #include "process.h"
-
-ThreadQueue system_thread_queue;
+#include "thread.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 
 void initialize_kernel() {
     initialize_process_queue();
-    initialize_thread_queue(&system_thread_queue);
-    initialize_interrupts();
 
-    // Create system threads
-    static int tid_counter = 1000; // System thread IDs start at 1000
-    create_thread(&system_thread_queue, tid_counter++, 0, io_handler_thread, NULL);
-    create_thread(&system_thread_queue, tid_counter++, 0, logger_thread, NULL);
-    create_thread(&system_thread_queue, tid_counter++, 0, resource_monitor_thread, NULL);
+    static int pid_counter = 1;
+    static int tid_counter = 1000;
 
-    printf("Kernel initialized with system threads.\n");
+    // Simulate system processes with realistic commands and users
+    struct SystemProcessInfo {
+        const char *command;
+        int uid; // 0 for root, 1000 for user
+    } system_processes[] = {
+                {"systemd", 0},
+                {"kthreadd", 0},
+                {"rcu_sched", 0},
+                {"ssh", 0},
+                {"cron", 0},
+                {"apache2", 0},
+                {"mysql", 0},
+                {"bash", 1000},
+                {"vim", 1000},
+                {"python", 1000}
+            };
+
+    int num_processes = sizeof(system_processes) / sizeof(system_processes[0]);
+
+    for (int i = 0; i < num_processes; i++) {
+        create_process(pid_counter++, 0, system_processes[i].uid, -1, system_processes[i].command);
+        Process *proc = find_process_by_pid(pid_counter - 1);
+
+        // Each process has multiple threads
+        for (int j = 0; j < 2; j++) {
+            char thread_name[32];
+            snprintf(thread_name, sizeof(thread_name), "%s_thread_%d", proc->command, j + 1);
+            create_thread(&proc->threads, tid_counter++, -1, system_process_function, NULL, thread_name);
+        }
+    }
 }
 
-void handle_interrupt(int interrupt_type) {
-    if (interrupt_type == TIMER_INTERRUPT) {
-        schedule_next_process();
-    } else {
-        printf("Kernel: Unknown interrupt.\n");
-    }
+void system_process_function(void *arg) {
+    // Simulate system process activities
+    usleep(50000); // 50ms
 }
