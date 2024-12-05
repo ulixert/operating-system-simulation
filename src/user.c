@@ -5,17 +5,36 @@
 #include <limits.h>
 #include <process.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "system_calls.h"
 
+extern char project_root[1024];
+
 void user_shell() {
     char command[256];
-    printf("Type 'help' for a list of commands.\n");
+    char cwd[1024]; // Buffer to store the current working directory
 
     while (1) {
-        printf("\nUser> ");
+        // Get the current working directory
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            perror("Failed to get current working directory");
+            break;
+        }
+
+        printf("\nUser ");
+
+        // Compare cwd with project_root and adjust the prompt
+        if (strcmp(cwd, project_root) == 0) {
+            printf("~> ");
+        } else if (strncmp(cwd, project_root, strlen(project_root)) == 0) {
+            printf("~%s> ", cwd + strlen(project_root)); // Show relative path from project root
+        } else {
+            printf("%s> ", cwd); // Show full path for directories outside the project root
+        }
+
         fgets(command, sizeof(command), stdin);
-        command[strcspn(command, "\n")] = 0;
+        command[strcspn(command, "\n")] = 0; // Remove newline character
 
         if (strcmp(command, "exit") == 0) break;
 
@@ -40,7 +59,7 @@ void handle_user_command(const char *command) {
         const char *program_name = command + 4;
 
         // Create a new process
-        static int pid_counter = 1;  // Simple PID generator
+        static int pid_counter = 1; // Simple PID generator
         create_process(pid_counter++, 10); // Default 10 cycles for a new program
         printf("Running program: %s (PID=%d)\n", program_name, pid_counter - 1);
     } else if (strcmp(command, "ps") == 0) {
@@ -49,9 +68,13 @@ void handle_user_command(const char *command) {
         printf("PID\tState\t\tTime Remaining\n");
         while (curr) {
             printf("%d\t%s\t\t%d\n", curr->pid,
-                   curr->state == READY ? "Ready" :
-                   curr->state == RUNNING ? "Running" :
-                   curr->state == BLOCKED ? "Blocked" : "Terminated",
+                   curr->state == READY
+                       ? "Ready"
+                       : curr->state == RUNNING
+                             ? "Running"
+                             : curr->state == BLOCKED
+                                   ? "Blocked"
+                                   : "Terminated",
                    curr->time_remaining);
             curr = curr->next;
         }
@@ -67,25 +90,30 @@ void handle_user_command(const char *command) {
     } else if (strncmp(command, "touch ", 6) == 0) {
         sys_create_file(command + 6);
     } else if (strncmp(command, "echo ", 5) == 0) {
-        char *data = strchr(command + 5, '"');
-        if (data) {
-            char *end_quote = strchr(data + 1, '"');
-            if (end_quote) {
-                *end_quote = '\0';
-                char *filename = end_quote + 2;
-                sys_write_to_file(filename, data + 1);
+        char *message_start = strchr(command + 5, '"'); // Find the first quote
+        if (message_start) {
+            char *message_end = strchr(message_start + 1, '"'); // Find the closing quote
+            if (message_end) {
+                *message_end = '\0'; // Null-terminate the message
+                char *redirect = strstr(message_end + 1, ">"); // Find >
+                if (redirect) {
+                    char *filename = redirect + 2; // Skip "> "
+                    sys_write_to_file(filename, message_start + 1);
+                } else {
+                    printf("Error: Missing '>' in echo command.\n");
+                }
             } else {
-                printf("Error: Missing closing quote.\n");
+                printf("Error: Missing closing quote in echo command.\n");
             }
-        } else {
-            printf("Error: Invalid echo syntax.\n");
         }
     } else if (strncmp(command, "cat ", 4) == 0) {
         sys_read_file(command + 4);
     } else if (strncmp(command, "rm ", 3) == 0) {
         sys_delete_file(command + 3);
     } else if (strcmp(command, "ls") == 0) {
-        sys_list_directory();
+        sys_list_directory(false); // Don't show hidden files
+    } else if (strcmp(command, "ls -a") == 0) {
+        sys_list_directory(true); // Show hidden files
     } else if (strncmp(command, "mkdir ", 6) == 0) {
         sys_create_directory(command + 6);
     } else if (strncmp(command, "cd ", 3) == 0) {

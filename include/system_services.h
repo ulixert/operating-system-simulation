@@ -8,7 +8,7 @@ bool create_file_service(const char *name);
 bool write_to_file_service(const char *name, const char *data);
 bool read_file_service(const char *name);
 bool delete_file_service(const char *name);
-void list_directory_service();
+void list_directory_service(bool show_all);
 bool create_directory_service(const char *name);
 bool change_directory_service(const char *name);
 bool delete_directory_service(const char *name);

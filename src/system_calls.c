@@ -8,6 +8,7 @@ bool sys_create_file(const char *name) {
         printf("Error: Failed to create file '%s'.\n", name);
         return false;
     }
+
     printf("File '%s' created successfully.\n", name);
     return true;
 }
@@ -18,6 +19,7 @@ bool sys_write_to_file(const char *name, const char *data) {
         printf("Error: Failed to write to file '%s'.\n", name);
         return false;
     }
+
     printf("Data written to '%s'.\n", name);
     return true;
 }
@@ -28,6 +30,7 @@ bool sys_read_file(const char *name) {
         printf("Error: Failed to read file '%s'.\n", name);
         return false;
     }
+
     return true;
 }
 
@@ -37,13 +40,14 @@ bool sys_delete_file(const char *name) {
         printf("Error: Failed to delete file '%s'.\n", name);
         return false;
     }
+
     printf("File '%s' deleted successfully.\n", name);
     return true;
 }
 
 // List directory contents
 void sys_list_directory(bool show_all) {
-    list_directory_service();
+    list_directory_service(show_all);
 }
 
 // Create a directory
@@ -52,6 +56,7 @@ bool sys_create_directory(const char *name) {
         printf("Error: Failed to create directory '%s'.\n", name);
         return false;
     }
+
     printf("Directory '%s' created successfully.\n", name);
     return true;
 }
@@ -59,10 +64,9 @@ bool sys_create_directory(const char *name) {
 // Change the current working directory
 bool sys_change_directory(const char *name) {
     if (!change_directory_service(name)) {
-        printf("Error: Failed to change directory to '%s'.\n", name);
         return false;
     }
-    printf("Changed directory to '%s'.\n", name);
+
     return true;
 }
 
@@ -72,6 +76,7 @@ bool sys_delete_directory(const char *name) {
         printf("Error: Failed to delete directory '%s'.\n", name);
         return false;
     }
+
     printf("Directory '%s' deleted successfully.\n", name);
     return true;
 }
