@@ -89,3 +89,14 @@ void execute_idle_thread() {
     // Simulate idle time
     usleep(50000); // 50ms
 }
+
+
+void finalize_cpu() {
+    // Signal the CPU thread to stop
+    running = 0;
+
+    // Wait for the CPU thread to finish execution
+    pthread_join(cpu_thread, NULL);
+
+    printf("CPU: Finalized.\n");
+}

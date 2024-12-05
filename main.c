@@ -32,7 +32,9 @@ int main() {
     // The CPU execution loop and interrupt handling run in a separate thread managed by initialize_cpu().
     user_shell();
 
-    // finalize_cpu(); // TODO: Implement finalize_cpu() to stop the CPU thread gracefully
+    // Stop the CPU thread to ensure a clean and orderly shutdown of CPU simulation,
+    // preventing any lingering threads or inconsistent states.
+    finalize_cpu();
 
     return 0;
 }

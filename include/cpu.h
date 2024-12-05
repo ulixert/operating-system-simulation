@@ -9,4 +9,6 @@ void execute_cpu_cycle();
 
 void execute_idle_thread();
 
+void finalize_cpu();
+
 #endif
