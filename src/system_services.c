@@ -7,6 +7,7 @@
 #include <dirent.h>
 #include "system_services.h"
 #include <sys/syslimits.h>
+#include <libgen.h>
 
 extern char project_root[1024];
 
@@ -147,4 +148,61 @@ bool change_directory_service(const char *name) {
 // Delete a directory
 bool delete_directory_service(const char *name) {
     return (rmdir(name) == 0);
+}
+
+// Move a file or directory
+bool move_service(const char *source, const char *destination) {
+    struct stat src_stat, dest_stat;
+
+    // Get the source metadata
+    if (stat(source, &src_stat) != 0) {
+        perror("Failed to access source");
+        return false;
+    }
+
+    // Check if destination exists
+    int dest_exists = (stat(destination, &dest_stat) == 0);
+
+    // Validate: Source is a directory, destination is a file
+    if (S_ISDIR(src_stat.st_mode) && dest_exists && !S_ISDIR(dest_stat.st_mode)) {
+        printf("Error: Cannot move a directory '%s' into a file '%s'.\n", source, destination);
+        return false;
+    }
+
+    // Handle moving into a directory
+    if (dest_exists && S_ISDIR(dest_stat.st_mode)) {
+        // Construct the target path inside the destination directory
+        char target_path[PATH_MAX];
+        snprintf(target_path, PATH_MAX, "%s/%s", destination, basename((char *)source));
+
+        // Attempt to move the source to the target path
+        if (rename(source, target_path) != 0) {
+            perror("Failed to move file or directory");
+            return false;
+        }
+
+        printf("Moved '%s' to '%s'.\n", source, target_path);
+        return true;
+    }
+
+    // Default move (e.g., rename or move to a new location)
+    if (rename(source, destination) != 0) {
+        perror("Failed to move file or directory");
+        return false;
+    }
+
+    printf("Moved '%s' to '%s'.\n", source, destination);
+    return true;
+}
+
+// Rename a file or directory
+bool rename_service(const char *old_name, const char *new_name) {
+    // Use the rename system call to rename the file or directory
+    if (rename(old_name, new_name) != 0) {
+        perror("Failed to rename file or directory");
+        return false;
+    }
+
+    printf("Renamed '%s' to '%s'.\n", old_name, new_name);
+    return true;
 }

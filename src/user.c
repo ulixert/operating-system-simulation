@@ -120,6 +120,26 @@ void handle_user_command(const char *command) {
         sys_change_directory(command + 3);
     } else if (strncmp(command, "rmdir ", 6) == 0) {
         sys_delete_directory(command + 6);
+    } else if (strncmp(command, "mv ", 3) == 0) {
+        char *args = strchr(command + 3, ' ');
+        if (args) {
+            *args = '\0';
+            const char *source = command + 3;
+            const char *destination = args + 1;
+            sys_move(source, destination);
+        } else {
+            printf("Error: Invalid mv syntax. Use 'mv <source> <destination>'.\n");
+        }
+    } else if (strncmp(command, "rename ", 7) == 0) {
+        char *args = strchr(command + 7, ' ');
+        if (args) {
+            *args = '\0';
+            const char *old_name = command + 7;
+            const char *new_name = args + 1;
+            sys_rename(old_name, new_name);
+        } else {
+            printf("Error: Invalid rename syntax. Use 'rename <old_name> <new_name>'.\n");
+        }
     } else {
         printf("Unknown command: %s\n", command);
     }

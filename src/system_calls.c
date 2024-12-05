@@ -80,3 +80,19 @@ bool sys_delete_directory(const char *name) {
     printf("Directory '%s' deleted successfully.\n", name);
     return true;
 }
+
+// Move a file or directory
+bool sys_move(const char *source, const char *destination) {
+    if (!move_service(source, destination)) {
+        return false;
+    }
+    return true;
+}
+
+// Rename a file or directory
+bool sys_rename(const char *old_name, const char *new_name) {
+    if (!rename_service(old_name, new_name)) {
+        return false;
+    }
+    return true;
+}
