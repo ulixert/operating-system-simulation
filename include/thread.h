@@ -2,6 +2,7 @@
 #define THREAD_H
 
 #include <pthread.h>
+#include <stdbool.h>
 
 // Thread states
 typedef enum {
@@ -38,7 +39,7 @@ typedef struct {
 void initialize_thread_queue(ThreadQueue *queue);
 
 void create_thread(ThreadQueue *queue, int tid, int time_required, void (*function)(void *), void *arg,
-                   const char *command);
+                   const char *command, bool will_print);
 
 void enqueue_thread(ThreadQueue *queue, Thread *thread);
 

@@ -14,7 +14,7 @@ void initialize_process_queue() {
     pthread_mutex_init(&process_queue.mutex, NULL);
 }
 
-void create_process(int pid, int ppid, int uid, int time_required, const char *command) {
+void create_process(int pid, int ppid, int uid, int time_required, const char *command, bool will_print) {
     Process *new_process = (Process *) malloc(sizeof(Process));
     if (new_process == NULL) {
         printf("Error: Failed to allocate memory for process.\n");
@@ -40,13 +40,15 @@ void create_process(int pid, int ppid, int uid, int time_required, const char *c
     enqueue_process(new_process);
     pthread_mutex_unlock(&process_queue.mutex);
 
-    // Optionally print process creation
-    // printf("Process created: PID=%d, PPID=%d, CMD=%s\n", pid, ppid, command);
+    if (will_print) {
+        printf("Process created: PID=%d, PPID=%d, CMD=%s\n", pid, ppid, command);
+    }
 }
 
 void terminate_process(int pid) {
     pthread_mutex_lock(&process_queue.mutex);
 
+    // Check if the current process is being terminated
     if (current_process && current_process->pid == pid) {
         // Free threads
         Thread *thread = current_process->threads.head;
@@ -157,13 +159,13 @@ const char *process_state_to_string(ProcessState state) {
     }
 }
 
-void format_cpu_time(int cpu_time, char *buffer, size_t size) {
+void format_cpu_time(const int cpu_time, char *buffer, size_t size) {
     int minutes = cpu_time / 60;
     int seconds = cpu_time % 60;
     snprintf(buffer, size, "%02d:%02d", minutes, seconds);
 }
 
-void format_time_left(int time_left, char *buffer, size_t size) {
+void format_time_left(const int time_left, char *buffer, size_t size) {
     if (time_left >= 0) {
         int minutes = time_left / 60;
         int seconds = time_left % 60;
@@ -173,8 +175,8 @@ void format_time_left(int time_left, char *buffer, size_t size) {
     }
 }
 
-const char *get_user_name(int uid) {
-    return uid == 0 ? "root" : "User";
+const char *get_user_name(const int uid) {
+    return uid == 0 ? "root" : "user";
 }
 
 void print_process_info(Process *proc) {

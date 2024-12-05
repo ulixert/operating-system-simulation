@@ -10,7 +10,7 @@ void initialize_kernel() {
     initialize_process_queue();
 
     static int pid_counter = 1;
-    static int tid_counter = 1;
+    static int tid_counter = 1000;
 
     // Seed the random number generator
     srand(time(NULL));
@@ -44,7 +44,7 @@ void initialize_kernel() {
             time_remaining = 5 + rand() % 16; // Random time between 5 and 20
         }
 
-        create_process(pid_counter++, 0, system_processes[i].uid, time_remaining, system_processes[i].command);
+        create_process(pid_counter++, 0, system_processes[i].uid, time_remaining, system_processes[i].command, false);
         Process *proc = find_process_by_pid(pid_counter - 1);
 
         // Each process has multiple threads
@@ -62,7 +62,7 @@ void initialize_kernel() {
             }
 
             create_thread(&proc->threads, tid_counter++, thread_time_remaining, system_process_function, NULL,
-                          thread_name);
+                          thread_name, false);
         }
     }
 }

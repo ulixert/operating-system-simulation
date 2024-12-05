@@ -3,7 +3,7 @@
 #include "system_services.h"
 
 // Create a file
-bool sys_create_file(const char *name) {
+bool sys_call_create_file(const char *name) {
     if (!create_file_service(name)) {
         printf("Error: Failed to create file '%s'.\n", name);
         return false;
@@ -14,7 +14,7 @@ bool sys_create_file(const char *name) {
 }
 
 // Write to a file
-bool sys_write_to_file(const char *name, const char *data) {
+bool sys_call_write_to_file(const char *name, const char *data) {
     if (!write_to_file_service(name, data)) {
         printf("Error: Failed to write to file '%s'.\n", name);
         return false;
@@ -25,7 +25,7 @@ bool sys_write_to_file(const char *name, const char *data) {
 }
 
 // Read a file
-bool sys_read_file(const char *name) {
+bool sys_call_read_file(const char *name) {
     if (!read_file_service(name)) {
         printf("Error: Failed to read file '%s'.\n", name);
         return false;
@@ -35,7 +35,7 @@ bool sys_read_file(const char *name) {
 }
 
 // Delete a file
-bool sys_delete_file(const char *name) {
+bool sys_call_delete_file(const char *name) {
     if (!delete_file_service(name)) {
         printf("Error: Failed to delete file '%s'.\n", name);
         return false;
@@ -46,12 +46,12 @@ bool sys_delete_file(const char *name) {
 }
 
 // List directory contents
-void sys_list_directory(bool show_all) {
+void sys_call_list_directory(bool show_all) {
     list_directory_service(show_all);
 }
 
 // Create a directory
-bool sys_create_directory(const char *name) {
+bool sys_call_create_directory(const char *name) {
     if (!create_directory_service(name)) {
         printf("Error: Failed to create directory '%s'.\n", name);
         return false;
@@ -62,7 +62,7 @@ bool sys_create_directory(const char *name) {
 }
 
 // Change the current working directory
-bool sys_change_directory(const char *name) {
+bool sys_call_change_directory(const char *name) {
     if (!change_directory_service(name)) {
         return false;
     }
@@ -71,7 +71,7 @@ bool sys_change_directory(const char *name) {
 }
 
 // Delete a directory
-bool sys_delete_directory(const char *name) {
+bool sys_call_delete_directory(const char *name) {
     if (!delete_directory_service(name)) {
         printf("Error: Failed to delete directory '%s'.\n", name);
         return false;
@@ -82,7 +82,7 @@ bool sys_delete_directory(const char *name) {
 }
 
 // Move a file or directory
-bool sys_move(const char *source, const char *destination) {
+bool sys_call_move(const char *source, const char *destination) {
     if (!move_service(source, destination)) {
         return false;
     }
@@ -90,7 +90,7 @@ bool sys_move(const char *source, const char *destination) {
 }
 
 // Rename a file or directory
-bool sys_rename(const char *old_name, const char *new_name) {
+bool sys_call_rename(const char *old_name, const char *new_name) {
     if (!rename_service(old_name, new_name)) {
         return false;
     }

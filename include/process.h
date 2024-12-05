@@ -45,7 +45,7 @@ extern Process *current_process;
 // Function prototypes
 void initialize_process_queue();
 
-void create_process(int pid, int ppid, int uid, int time_required, const char *command);
+void create_process(int pid, int ppid, int uid, int time_required, const char *command, bool will_print);
 
 void terminate_process(int pid);
 

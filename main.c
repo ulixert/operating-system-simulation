@@ -31,7 +31,6 @@ int main() {
         return 1;
     }
 
-    printf("Welcome to the OS Simulation!\n");
     initialize_kernel();
 
     // Create a thread for the CPU execution loop

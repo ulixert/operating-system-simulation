@@ -3,6 +3,8 @@
 #include <unistd.h>
 #include "thread.h"
 
+#include <stdbool.h>
+
 void initialize_thread_queue(ThreadQueue *queue) {
     queue->head = NULL;
     queue->tail = NULL;
@@ -10,7 +12,7 @@ void initialize_thread_queue(ThreadQueue *queue) {
 }
 
 void create_thread(ThreadQueue *queue, int tid, int time_required, void (*function)(void *), void *arg,
-                   const char *command) {
+                   const char *command, bool will_print) {
     Thread *new_thread = (Thread *) malloc(sizeof(Thread));
     if (new_thread == NULL) {
         printf("Error: Failed to allocate memory for thread.\n");
@@ -30,8 +32,9 @@ void create_thread(ThreadQueue *queue, int tid, int time_required, void (*functi
     enqueue_thread(queue, new_thread);
     pthread_mutex_unlock(&queue->mutex);
 
-    // Optionally print thread creation
-    // printf("Thread created: TID=%d, Time Required=%d, Command=%s\n", tid, time_required, command);
+    if (will_print) {
+        printf("Thread created: TID=%d, Time Required=%d, Command=%s\n", tid, time_required, command);
+    }
 }
 
 void enqueue_thread(ThreadQueue *queue, Thread *thread) {
