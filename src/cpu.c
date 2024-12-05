@@ -63,8 +63,15 @@ void execute_cpu_cycle() {
         current_process->time_slice--;
         current_process->cpu_time_used++;
 
-        // OPTIONAL: To prevent processes from getting stuck, reduce random state changes or remove them completely
-        // If you reintroduce them, ensure wake_up_processes() logic or other conditions can bring them back.
+        // Randomly change process state to simulate I/O
+        int random_value = rand() % 100;
+        if (random_value < 10) {
+            current_process->state = SLEEPING;
+        } else if (random_value < 20) {
+            current_process->state = WAITING;
+        } else {
+            current_process->state = RUNNING;
+        }
 
 
         // Check if process completed

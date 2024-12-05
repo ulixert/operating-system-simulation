@@ -205,8 +205,8 @@ void print_process_info(Process *proc) {
         format_cpu_time(thread->cpu_time_used, cpu_time_buf, sizeof(cpu_time_buf));
         format_time_left(thread->time_remaining, time_left_buf, sizeof(time_left_buf));
 
-        printf("%-6d %-6d %-8s %-10s %-10s %-10s %-30s %-10s\n",
-               proc->pid,
+        printf("%-6s %-6d %-8s %-10s %-10s %-10s %-30s %-10s\n",
+               "-",
                thread->tid, // Thread ID
                "Thread", // Type
                thread_state_to_string(thread->state),

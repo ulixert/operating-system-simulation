@@ -30,7 +30,7 @@ void initialize_kernel() {
                 {"rcu_sched", 0, 1},
                 {"sshd", 0, 0},
                 {"cron", 0, 0},
-                {"apache2", 0, 0},
+                {"apache", 0, 0},
                 {"mysql", 0, 1},
                 {"bash", 1000, 1},
                 {"vim", 1000, 1},
