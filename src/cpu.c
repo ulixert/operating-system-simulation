@@ -2,6 +2,9 @@
 #include <unistd.h>
 #include <pthread.h>
 #include "cpu.h"
+
+#include <stdlib.h>
+
 #include "process.h"
 #include "thread.h"
 #include "interrupt.h"
@@ -23,6 +26,16 @@ void execute_cpu_cycle() {
         }
         current_process->time_slice--;
         current_process->cpu_time_used++; // Increment CPU time used
+
+        // Randomly change process state
+        int random_value = rand() % 100;
+        if (random_value < 10) {
+            current_process->state = SLEEPING;
+        } else if (random_value < 20) {
+            current_process->state = WAITING;
+        } else {
+            current_process->state = RUNNING;
+        }
 
         // Check if process has completed
         if (current_process->time_remaining == 0) {

@@ -61,28 +61,49 @@ Thread *dequeue_thread(ThreadQueue *queue) {
 void execute_thread(ThreadQueue *queue) {
     pthread_mutex_lock(&queue->mutex);
 
-    if (queue->head == NULL) {
+    Thread *thread = queue->head;
+
+    if (thread == NULL) {
         pthread_mutex_unlock(&queue->mutex);
         return;
     }
 
-    Thread *thread = queue->head;
+    // Remove the thread from the head of the queue
+    queue->head = thread->next;
+    if (queue->head == NULL) {
+        queue->tail = NULL;
+    }
+    thread->next = NULL;
+
     thread->state = THREAD_RUNNING;
 
     pthread_mutex_unlock(&queue->mutex);
 
     // Simulate thread execution
-    thread->function(thread->arg);
-    thread->time_remaining--;
+    usleep(50000); // 50ms time slice
+
+    // Decrement time_remaining only if it's greater than 0
+    if (thread->time_remaining > 0) {
+        thread->time_remaining--;
+    }
+
     thread->cpu_time_used++;
 
     pthread_mutex_lock(&queue->mutex);
 
-    if (thread->time_remaining > 0 || thread->time_remaining == -1) {
-        thread->state = THREAD_SLEEPING; // Simulate state change
-        // Move the thread to the end of the queue
-        queue->head = thread->next;
-        thread->next = NULL;
+    // Randomly change thread state
+    int random_value = rand() % 100;
+    if (random_value < 10) {
+        thread->state = THREAD_SLEEPING;
+    } else if (random_value < 20) {
+        thread->state = THREAD_WAITING;
+    } else {
+        thread->state = THREAD_RUNNING;
+    }
+
+    // Re-enqueue the thread if it hasn't completed execution
+    if (thread->time_remaining != 0) {
+        // Re-enqueue the thread
         if (queue->tail) {
             queue->tail->next = thread;
             queue->tail = thread;
@@ -90,11 +111,8 @@ void execute_thread(ThreadQueue *queue) {
             queue->head = queue->tail = thread;
         }
     } else {
+        // Thread has completed execution
         thread->state = THREAD_TERMINATED;
-        // Remove thread from queue
-        if (queue->head == thread) {
-            queue->head = thread->next;
-        }
         free(thread);
     }
 
@@ -109,6 +127,10 @@ const char *thread_state_to_string(ThreadState state) {
             return "Running";
         case THREAD_SLEEPING:
             return "Sleeping";
+        case THREAD_WAITING:
+            return "Waiting";
+        case THREAD_ZOMBIE:
+            return "Zombie";
         case THREAD_TERMINATED:
             return "Terminated";
         default:

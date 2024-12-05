@@ -57,7 +57,6 @@ void terminate_process(int pid) {
         }
         free(current_process);
         current_process = NULL;
-        printf("Process PID=%d terminated.\n", pid);
         pthread_mutex_unlock(&process_queue.mutex);
         return;
     }
@@ -83,7 +82,6 @@ void terminate_process(int pid) {
                 free(temp);
             }
             free(curr);
-            printf("Process PID=%d terminated.\n", pid);
             pthread_mutex_unlock(&process_queue.mutex);
             return;
         }
@@ -148,6 +146,10 @@ const char *process_state_to_string(ProcessState state) {
             return "Running";
         case SLEEPING:
             return "Sleeping";
+        case WAITING:
+            return "Waiting";
+        case ZOMBIE:
+            return "Zombie";
         case TERMINATED:
             return "Terminated";
         default:
@@ -155,33 +157,59 @@ const char *process_state_to_string(ProcessState state) {
     }
 }
 
+
 void format_cpu_time(int cpu_time, char *buffer, size_t size) {
     int minutes = cpu_time / 60;
     int seconds = cpu_time % 60;
     snprintf(buffer, size, "%02d:%02d", minutes, seconds);
 }
 
+const char *get_user_name(int uid) {
+    return uid == 0 ? "root" : "user";
+}
+
 void print_process_info(Process *proc) {
     char cpu_time_buf[16];
+    char time_left_buf[16];
+
     format_cpu_time(proc->cpu_time_used, cpu_time_buf, sizeof(cpu_time_buf));
 
-    printf("%-6d %-6s %-10s %-8s %-20s\n",
+    if (proc->time_remaining >= 0) {
+        format_cpu_time(proc->time_remaining, time_left_buf, sizeof(time_left_buf));
+    } else {
+        snprintf(time_left_buf, sizeof(time_left_buf), "∞");
+    }
+
+    printf("%-6d %-6s %-6s %-10s %-8s %-8s %-8s %-20s\n",
            proc->pid,
-           "Process",
+           "-",
+           get_user_name(proc->uid),
            process_state_to_string(proc->state),
            cpu_time_buf,
+           time_left_buf,
+           "Process",
            proc->command);
 
     Thread *thread = proc->threads.head;
     while (thread) {
         format_cpu_time(thread->cpu_time_used, cpu_time_buf, sizeof(cpu_time_buf));
 
-        printf("  %-6d %-6s %-10s %-8s %-20s\n",
+        if (thread->time_remaining >= 0) {
+            format_cpu_time(thread->time_remaining, time_left_buf, sizeof(time_left_buf));
+        } else {
+            snprintf(time_left_buf, sizeof(time_left_buf), "∞");
+        }
+
+        printf("%-6d %-6d %-6s %-10s %-8s %-8s %-8s %-20s\n",
+               proc->pid,
                thread->tid,
-               "Thread",
+               get_user_name(proc->uid),
                thread_state_to_string(thread->state),
                cpu_time_buf,
+               time_left_buf,
+               "Thread",
                thread->command);
+
         thread = thread->next;
     }
 }
@@ -190,9 +218,9 @@ void list_processes_and_threads() {
     pthread_mutex_lock(&process_queue.mutex);
 
     // Print header
-    printf("%-6s %-6s %-10s %-8s %-20s\n",
-           "ID", "Type", "State", "CPU Time", "Command");
-    printf("--------------------------------------------------------------\n");
+    printf("%-6s %-6s %-6s %-10s %-8s %-8s %-8s %-20s\n",
+           "PID", "TID", "User", "State", "CPU Time", "Time Left", "Type", "Command");
+    printf("------------------------------------------------------------------------------------------\n");
 
     // Display the current process
     if (current_process) {

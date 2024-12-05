@@ -10,7 +10,7 @@ void initialize_kernel() {
     initialize_process_queue();
 
     static int pid_counter = 1;
-    static int tid_counter = 1000;
+    static int tid_counter = 1;
 
     // Simulate system processes with realistic commands and users
     struct SystemProcessInfo {
@@ -20,7 +20,7 @@ void initialize_kernel() {
                 {"systemd", 0},
                 {"kthreadd", 0},
                 {"rcu_sched", 0},
-                {"ssh", 0},
+                {"sshd", 0},
                 {"cron", 0},
                 {"apache2", 0},
                 {"mysql", 0},
@@ -45,6 +45,10 @@ void initialize_kernel() {
 }
 
 void system_process_function(void *arg) {
-    // Simulate system process activities
-    usleep(50000); // 50ms
+    // Simulate work in a loop to keep the thread running
+    while (1) {
+        // Simulate some work
+        usleep(50000); // 50ms
+        pthread_testcancel(); // Allow thread to be cancelled
+    }
 }

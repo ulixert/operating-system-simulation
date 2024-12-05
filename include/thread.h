@@ -8,6 +8,8 @@ typedef enum {
     THREAD_READY,
     THREAD_RUNNING,
     THREAD_SLEEPING,
+    THREAD_WAITING,
+    THREAD_ZOMBIE,
     THREAD_TERMINATED
 } ThreadState;
 
