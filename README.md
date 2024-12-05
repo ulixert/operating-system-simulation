@@ -1,160 +1,219 @@
-# Operating System Simulation
+# OS Simulation Project README
 
-This repository contains a simple modular operating system simulation written in C, designed to be run locally or inside a Docker container. It features modularized components such as a kernel, user shell, system calls, and process/thread management.
+This README provides detailed instructions on how to set up, build, and run the OS Simulation project both locally and
+using Docker. It also addresses common issues and provides troubleshooting tips.
 
-## Features
+## Table of Contents
 
-1. **Interactive User Shell**: Simulated shell to execute commands like `ls`, `touch`, `help`, etc.
-2. **Kernel Simulation**: Handles core functionalities like initialization and interrupt handling.
-3. **System Calls**: Acts as an interface between user commands and kernel functions.
-4. **Process Management**: Simulated process creation, termination, and listing.
-5. **Docker Support**: Fully containerized for easy deployment and testing.
+- [Project Overview](#project-overview)
+- [Prerequisites](#prerequisites)
+- [Project Structure](#project-structure)
+- [Building and Running Locally](#building-and-running-locally)
+    - [Compilation](#compilation)
+    - [Running the Simulation](#running-the-simulation)
+- [Building and Running with Docker](#building-and-running-with-docker)
+    - [Docker Setup](#docker-setup)
+    - [Building the Docker Image](#building-the-docker-image)
+- [Available Commands](#available-commands)
+    - [File System Commands](#file-system-commands)
+    - [Process and Thread Commands](#process-and-thread-commands)
+    - [Other Commands](#other-commands)
+- [Troubleshooting](#troubleshooting)
+    - [Docker Compose Input Handling](#docker-compose-input-handling)
+- [Additional Notes](#additional-notes)
 
----
+## Project Overview
 
-## Setup Instructions
+The OS Simulation project is a simplified operating system simulation written in C. It provides a shell interface where
+users can execute commands to interact with a simulated file system, manage processes and threads, and perform basic
+operations similar to those found in a Unix-like environment.
 
-### Prerequisites
+## Prerequisites
 
-For Local Run:
-- GCC installed on your system
-- Make installed on your system
-
-For Docker Run:
-- Docker installed on your system
-- Docker Compose installed
-
----
-
-## Quick Start
-
-### Local Run
-
-1. Clone this repository:
-   ```sh
-   git clone https://github.com/yourusername/os-simulation.git
-   cd os-simulation
-   ```
-
-2. Build the project:
-   ```sh
-   make
-   ```
-
-3. Run the simulation locally:
-   ```sh
-   ./bin/os_simulation
-   ```
-
-4. Clean up build files:
-   ```sh
-   make clean
-   ```
-
----
-
-### Docker Run
-
-1. Build and start the service in detached mode:
-   ```sh
-   docker compose up -d
-   ```
-
-2. Run the container interactively:
-   ```sh
-   docker compose run os_simulation
-   ```
-
-3. Stop the services:
-   ```sh
-   docker compose down
-   ```
-
----
-
-## Commands
-
-Once inside the OS simulation, the following commands are available:
-
-- `ls`: List all files.
-- `touch <file>`: Create a new file.
-- `rm <file>`: Delete a file.
-- `mkdir <dir>`: Create a new directory.
-- `rmdir <dir>`: Remove a directory.
-- `ps`: List all running processes.
-- `kill <pid>`: Terminate a process by its ID.
-- `help`: Display available commands.
-- `exit`: Exit the OS simulation.
-
----
-
-## Development
-
-### Build Locally
-To rebuild the project after making changes:
-```sh
-make
-```
-
-### Build the Docker Image
-To rebuild the Docker image after making changes:
-```sh
-docker compose build
-```
-
-### Clean Up
-To clean up build files and Docker volumes:
-```sh
-# Local
-make clean
-
-# Docker
-docker compose down -v
-```
-
----
+- GCC (GNU Compiler Collection)
+- Make
+- pthreads library (usually included with GCC)
+- Docker (optional, if you choose to run the simulation in a Docker container)
 
 ## Project Structure
 
-```text
-os-simulation/
-├── Dockerfile
-├── docker-compose.yml
-├── Makefile
-├── include/
-│   ├── user.h
-│   ├── system_calls.h
-│   ├── kernel.h
-│   ├── interrupt.h
-│   ├── process.h
-│   ├── thread.h
-│   └── system_services.h
-├── src/
-│   ├── user.c
-│   ├── system_calls.c
-│   ├── kernel.c
-│   ├── interrupt.c
-│   ├── process.c
-│   ├── thread.c
-│   └── system_services.c
-├── main.c
-└── README.md
+The project is organized into the following directories and files:
+
+- `src/`: Contains the source code files.
+- `include/`: Contains header files.
+- `bin/`: Compiled binary executables are placed here after building.
+- `Makefile`: Build configuration for compiling the project.
+
+## Building and Running Locally
+
+### Compilation
+
+To build the OS Simulation project locally, navigate to the project's root directory and run:
+
+```
+make clean
+make
 ```
 
----
+- `make clean`: Cleans previous build files.
+- `make`: Compiles the source code and builds the executable.
 
-## Known Issues
+The compiled binary will be placed in the `bin/` directory.
 
-1. **Docker Compose Input Handling**:
-   When using `docker compose up`, `stdin` might not behave interactively. To fix, always use:
-   ```sh
-   docker compose run os_simulation
+### Running the Simulation
+
+To run the OS Simulation:
+
+```
+./bin/os_simulation
+```
+
+This will start the simulation and present you with the user shell interface.
+
+## Building and Running with Docker
+
+### Docker Setup
+
+Ensure you have Docker installed on your system. You can verify the installation by running:
+
+```
+docker --version
+```
+
+### Building the Docker Image
+
+Build the Docker image using the provided `Dockerfile`:
+
+```
+docker build -t os_simulation .
+```
+
+### Running the Simulation in Docker
+
+When using Docker Compose, you might encounter issues with interactive input not behaving correctly if you use:
+
+```
+docker compose up
+```
+
+To fix this issue, always use:
+
+```
+docker compose run os_simulation
+```
+
+This command ensures that the simulation runs interactively, allowing you to enter commands in the shell interface.
+
+Alternatively, you can run the container directly using `docker run`:
+
+```
+docker run -it os_simulation
+```
+
+## Available Commands
+
+Within the OS Simulation shell, you can use the following commands:
+
+### File System Commands
+
+- `ls`: List unhidden files and directories.
+- `ls -a`: List all files and directories, including hidden ones.
+- `touch <file>`: Create a new file.
+- `rm <file>`: Delete a file.
+- `mkdir <dir>`: Create a new directory.
+- `rmdir <dir>`: Remove an empty directory.
+- `cd <dir>`: Change the current directory. Use `cd` or `cd ~` to return to the project root.
+- `mv <src> <dest>`: Move or rename a file or directory.
+- `rename <old> <new>`: Rename a file or directory.
+- `echo "message" > <file>`: Write a message to a file.
+- `cat <file>`: Display the contents of a file.
+
+### Process and Thread Commands
+
+- `ps`: List all processes and threads.
+- `kill <pid>`: Terminate a process by its process ID.
+- `run <command> <time>`: Create a new process. Time is in seconds; omit or use `-1` for infinite.
+- `thread <pid> <time>`: Create a new thread in a process. Time is in seconds; omit or use `-1` for infinite.
+
+### Other Commands
+
+- `exit`: Exit the OS Simulation shell.
+- `help`: Display the help message with available commands.
+
+## Troubleshooting
+
+### Docker Compose Input Handling
+
+When using Docker Compose, you might encounter issues with interactive input not behaving correctly if you use:
+
+```
+docker compose up
+```
+
+To fix this, use the following command instead:
+
+```
+docker compose run os_simulation
+```
+
+This ensures that the container runs interactively, allowing you to enter commands in the shell.
+
+## Additional Notes
+
+- The simulation includes both system processes and user-created processes and threads.
+- Processes and threads may have finite or infinite execution times.
+- Use the `ps` command to monitor the state of processes and threads.
+- The simulation supports basic file system operations within the project directory.
+
+## Example Usage
+
+### Creating and Managing Processes
+
+1. **Create a new process:**
+
+   ```
+   run my_process 10
    ```
 
-2. **Buffering in Non-TTY Mode**:
-   The application may exhibit unexpected buffering when not run interactively. To force interactivity, ensure `tty: true` and `stdin_open: true` in `docker-compose.yml`.
+2. **List processes and threads:**
 
----
+   ```
+   ps
+   ```
+
+3. **Terminate a process:**
+
+   ```
+   kill 121
+   ```
+
+### File Operations
+
+1. **Create a new file:**
+
+   ```
+   touch newfile.txt
+   ```
+
+2. **Write to a file:**
+
+   ```
+   echo "Hello, World!" > newfile.txt
+   ```
+
+3. **Read a file:**
+
+   ```
+   cat newfile.txt
+   ```
+
+4. **Delete a file:**
+
+   ```
+   rm newfile.txt
+   ```
+
+--- 
 
 ## Contributing
 
@@ -164,8 +223,11 @@ os-simulation/
 4. Push to the branch.
 5. Open a Pull Request.
 
----
-
 ## License
 
 This project is licensed under the MIT License. See `LICENSE` for details.
+
+
+---
+
+Enjoy exploring the OS Simulation project!
