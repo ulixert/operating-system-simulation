@@ -3,8 +3,10 @@
 
 #define TIME_SLICE 5 // Define a suitable time slice
 
+void initialize_cpu();
+
 void execute_cpu_cycle();
 
-void handle_system_events();
+void execute_idle_thread();
 
-#endif // CPU_H
+#endif

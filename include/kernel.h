@@ -5,4 +5,8 @@ void initialize_kernel();
 
 void system_process_function(void *arg);
 
+void schedule_next_process();
+
+void wake_up_processes();
+
 #endif

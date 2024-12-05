@@ -1,4 +1,7 @@
 #include "kernel.h"
+
+#include <cpu.h>
+
 #include "process.h"
 #include "thread.h"
 #include <stdio.h>
@@ -77,4 +80,51 @@ void system_process_function(void *arg) {
         usleep(50000); // 50ms
         pthread_testcancel(); // Allow thread to be cancelled
     }
+}
+
+void schedule_next_process() {
+    pthread_mutex_lock(&process_queue.mutex);
+
+    // If current process has run out of time slice or is no longer suitable to run, requeue it
+    if (current_process && current_process->state != TERMINATED) {
+        if (current_process->time_slice <= 0) {
+            current_process->state = READY;
+            current_process->time_slice = TIME_SLICE;
+            enqueue_process(current_process);
+            current_process = NULL;
+        }
+    }
+
+    // If there's no current process, pick one from the queue
+    if (!current_process) {
+        current_process = dequeue_process();
+        if (current_process) {
+            current_process->state = RUNNING;
+            current_process->time_slice = TIME_SLICE;
+        }
+    }
+
+    pthread_mutex_unlock(&process_queue.mutex);
+}
+
+void wake_up_processes() {
+    pthread_mutex_lock(&process_queue.mutex);
+
+    Process *p = process_queue.head;
+    while (p) {
+        if (p->state == WAITING || p->state == SLEEPING) {
+            // Wake them up by setting them back to READY
+            p->state = READY;
+        }
+        p = p->next;
+    }
+
+    if (current_process && (current_process->state == WAITING || current_process->state == SLEEPING)) {
+        current_process->state = READY;
+        // Re-enqueue the current process so scheduler can pick it again
+        enqueue_process(current_process);
+        current_process = NULL;
+    }
+
+    pthread_mutex_unlock(&process_queue.mutex);
 }

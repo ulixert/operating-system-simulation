@@ -47,10 +47,8 @@ Thread *dequeue_thread(ThreadQueue *queue);
 
 void execute_thread(ThreadQueue *queue);
 
-void execute_idle_thread();
-
 void dummy_thread_task(void *arg);
 
 const char *thread_state_to_string(ThreadState state);
 
-#endif // THREAD_H
+#endif

@@ -1,22 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <pthread.h>
-
 #include "include/user.h"
 #include "include/kernel.h"
 #include "include/cpu.h"
 
 char project_root[1024];
-
-void *cpu_execution_loop(void *arg) {
-    while (1) {
-        execute_cpu_cycle();
-        handle_system_events();
-        usleep(100000);
-    }
-    return NULL;
-}
 
 int main() {
     // Capture the current working directory as the home directory
@@ -31,18 +20,19 @@ int main() {
         return 1;
     }
 
+    // Initialize the kernel, which sets up initial processes and states
     initialize_kernel();
 
-    // Create a thread for the CPU execution loop
-    pthread_t cpu_thread;
-    pthread_create(&cpu_thread, NULL, cpu_execution_loop, NULL);
+    // Initialize the CPU, which sets up interrupts, creates the CPU thread,
+    // and starts the continuous execution loop that triggers interrupts
+    // and schedules processes.
+    initialize_cpu();
 
-    // Run the user shell in the main thread
+    // Run the user shell in the main thread.
+    // The CPU execution loop and interrupt handling run in a separate thread managed by initialize_cpu().
     user_shell();
 
-    // Join the CPU thread before exiting (optional)
-    pthread_cancel(cpu_thread); // Cancel the CPU thread
-    pthread_join(cpu_thread, NULL);
+    // finalize_cpu(); // TODO: Implement finalize_cpu() to stop the CPU thread gracefully
 
     return 0;
 }

@@ -141,11 +141,6 @@ const char *thread_state_to_string(ThreadState state) {
     }
 }
 
-void execute_idle_thread() {
-    // Simulate idle time
-    usleep(50000); // 50ms
-}
-
 void dummy_thread_task(void *arg) {
     // Simulate work
     usleep(50000); // 50ms
