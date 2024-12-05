@@ -5,7 +5,7 @@
 #include "include/system_calls.h"
 
 int main() {
-    printf("Welcome to the Modular OS Simulation!\n");
+    printf("Welcome to the OS Simulation!\n");
     initialize_kernel();
     user_shell();
     return 0;
