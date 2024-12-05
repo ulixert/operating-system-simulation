@@ -157,58 +157,60 @@ const char *process_state_to_string(ProcessState state) {
     }
 }
 
-
 void format_cpu_time(int cpu_time, char *buffer, size_t size) {
     int minutes = cpu_time / 60;
     int seconds = cpu_time % 60;
     snprintf(buffer, size, "%02d:%02d", minutes, seconds);
 }
 
+void format_time_left(int time_left, char *buffer, size_t size) {
+    if (time_left >= 0) {
+        int minutes = time_left / 60;
+        int seconds = time_left % 60;
+        snprintf(buffer, size, "%02d:%02d", minutes, seconds);
+    } else {
+        snprintf(buffer, size, "∞");
+    }
+}
+
 const char *get_user_name(int uid) {
-    return uid == 0 ? "root" : "user";
+    return uid == 0 ? "root" : "User";
 }
 
 void print_process_info(Process *proc) {
     char cpu_time_buf[16];
     char time_left_buf[16];
 
+    // Format CPU time and time left
     format_cpu_time(proc->cpu_time_used, cpu_time_buf, sizeof(cpu_time_buf));
+    format_time_left(proc->time_remaining, time_left_buf, sizeof(time_left_buf));
 
-    if (proc->time_remaining >= 0) {
-        format_cpu_time(proc->time_remaining, time_left_buf, sizeof(time_left_buf));
-    } else {
-        snprintf(time_left_buf, sizeof(time_left_buf), "∞");
-    }
-
-    printf("%-6d %-6s %-6s %-10s %-8s %-8s %-8s %-20s\n",
+    // Print process information
+    printf("%-6d %-6s %-8s %-10s %-10s %-10s %-30s %-10s\n",
            proc->pid,
-           "-",
-           get_user_name(proc->uid),
+           "-", // No TID for processes
+           "Process", // Type
            process_state_to_string(proc->state),
-           cpu_time_buf,
-           time_left_buf,
-           "Process",
-           proc->command);
+           cpu_time_buf, // CPU Time
+           get_user_name(proc->uid),
+           proc->command,
+           time_left_buf); // Time Left
 
+    // Iterate through threads of the process
     Thread *thread = proc->threads.head;
     while (thread) {
         format_cpu_time(thread->cpu_time_used, cpu_time_buf, sizeof(cpu_time_buf));
+        format_time_left(thread->time_remaining, time_left_buf, sizeof(time_left_buf));
 
-        if (thread->time_remaining >= 0) {
-            format_cpu_time(thread->time_remaining, time_left_buf, sizeof(time_left_buf));
-        } else {
-            snprintf(time_left_buf, sizeof(time_left_buf), "∞");
-        }
-
-        printf("%-6d %-6d %-6s %-10s %-8s %-8s %-8s %-20s\n",
+        printf("%-6d %-6d %-8s %-10s %-10s %-10s %-30s %-10s\n",
                proc->pid,
-               thread->tid,
-               get_user_name(proc->uid),
+               thread->tid, // Thread ID
+               "Thread", // Type
                thread_state_to_string(thread->state),
-               cpu_time_buf,
-               time_left_buf,
-               "Thread",
-               thread->command);
+               cpu_time_buf, // CPU Time
+               get_user_name(proc->uid),
+               thread->command,
+               time_left_buf); // Time Left
 
         thread = thread->next;
     }
@@ -218,9 +220,9 @@ void list_processes_and_threads() {
     pthread_mutex_lock(&process_queue.mutex);
 
     // Print header
-    printf("%-6s %-6s %-6s %-10s %-8s %-8s %-8s %-20s\n",
-           "PID", "TID", "User", "State", "CPU Time", "Time Left", "Type", "Command");
-    printf("------------------------------------------------------------------------------------------\n");
+    printf("%-6s %-6s %-8s %-10s %-10s %-10s %-30s %-10s\n",
+           "PID", "TID", "Type", "State", "CPU Time", "User", "Command", "Time Left");
+    printf("------------------------------------------------------------------------------------------------\n");
 
     // Display the current process
     if (current_process) {
