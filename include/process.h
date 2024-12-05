@@ -25,6 +25,7 @@ typedef struct Process {
     int cpu_time_used; // CPU time used
     ProcessState state;
     char command[256];
+    int thread_count;
     ThreadQueue threads;
     struct Process *next;
     int time_slice; // For scheduling

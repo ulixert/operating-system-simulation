@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include "system_services.h"
-#include <sys/syslimits.h>
+#include <limits.h>
 #include <libgen.h>
 
 extern char project_root[1024];

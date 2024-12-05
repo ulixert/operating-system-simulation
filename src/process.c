@@ -29,6 +29,7 @@ void create_process(int pid, int ppid, int uid, int time_required, const char *c
     new_process->next = NULL;
     new_process->time_slice = TIME_SLICE;
     new_process->start_time = time(NULL);
+    new_process->thread_count = 0;
 
     // Initialize thread queue
     initialize_thread_queue(&new_process->threads);

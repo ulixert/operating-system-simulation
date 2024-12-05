@@ -4,5 +4,3 @@ services:
       context: .
     volumes:
       - ./data:/os-simulation/data
-    tty: true
-    stdin_open: true

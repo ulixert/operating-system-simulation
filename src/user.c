@@ -92,8 +92,9 @@ void handle_user_command(const char *input_command) {
             printf("\nFor processes and threads:\n");
             printf("  ps                        - List all processes\n");
             printf("  kill <pid>                - Terminate a process\n");
-            printf("  run <command> <time>      - Create a process\n");
-            printf("  thread <pid> <time>       - Create a thread in a process\n");
+            printf("  run <command> <time>      - Create a process (time in seconds, emit or -1 for infinite)\n");
+            printf(
+                "  thread <pid> <time>       - Create a thread in a process (time in seconds, omit or -1 for infinite)\n");
 
             printf("\nOther commands:\n");
             printf("  exit                      - Exit the OS simulation\n");
@@ -126,37 +127,6 @@ void handle_user_command(const char *input_command) {
             printf("  rename <old> <new>        - Rename a file or directory\n");
         } else {
             sys_call_rename(args[1], args[2]);
-        }
-    } else if (strcmp(args[0], "run") == 0) {
-        if (arg_count != 3) {
-            printf("Usage: run <command> <time>\n");
-        } else {
-            const char *name = args[1];
-            int time_required = atoi(args[2]);
-            if (time_required > 0) {
-                static int pid_counter = 100; // Start PID from 100 for user processes
-                int ppid = 0; // Parent PID is 0 for simplicity
-                create_process(pid_counter++, ppid, 1000, time_required, name, true);
-            } else {
-                printf("Error: Invalid time specified.\n");
-            }
-        }
-    } else if (strcmp(args[0], "ps") == 0) {
-        if (arg_count == 1) {
-            list_processes_and_threads();
-        } else {
-            printf("Usage: ps\n");
-        }
-    } else if (strcmp(args[0], "kill") == 0) {
-        if (arg_count != 2) {
-            printf("Usage: kill <pid>\n");
-        } else {
-            int pid = atoi(args[1]);
-            if (pid > 0) {
-                terminate_process(pid);
-            } else {
-                printf("Error: Invalid PID specified.\n");
-            }
         }
     } else if (strcmp(args[0], "touch") == 0) {
         if (arg_count != 2) {
@@ -216,18 +186,51 @@ void handle_user_command(const char *input_command) {
         } else {
             sys_call_move(args[1], args[2]);
         }
+    } else if (strcmp(args[0], "run") == 0) {
+        if (arg_count < 2 || arg_count > 3) {
+            printf("Usage: run <command> <time>\n");
+        } else {
+            const char *name = args[1];
+            int time_required = (arg_count == 3) ? atoi(args[2]) : -1;
+            if (time_required > 0 || time_required == -1) {
+                static int pid_counter = 120; // Start PID from 100 for user processes
+                int ppid = 0; // Parent PID is 0 for simplicity
+                create_process(pid_counter++, ppid, 1000, time_required, name, true);
+            } else {
+                printf("Error: Invalid time specified.\n");
+            }
+        }
+    } else if (strcmp(args[0], "ps") == 0) {
+        if (arg_count == 1) {
+            list_processes_and_threads();
+        } else {
+            printf("Usage: ps\n");
+        }
+    } else if (strcmp(args[0], "kill") == 0) {
+        if (arg_count != 2) {
+            printf("Usage: kill <pid>\n");
+        } else {
+            int pid = atoi(args[1]);
+            if (pid > 0) {
+                terminate_process(pid);
+            } else {
+                printf("Error: Invalid PID specified.\n");
+            }
+        }
     } else if (strcmp(args[0], "thread") == 0) {
-        if (arg_count != 3) {
+        if (arg_count < 2 || arg_count > 3) {
             printf("Usage: thread <pid> <time>\n");
         } else {
             int pid = atoi(args[1]);
-            int time_required = atoi(args[2]);
+            int time_required = (arg_count == 3) ? atoi(args[2]) : -1;
             Process *process = find_process_by_pid(pid);
             if (process == NULL) {
                 printf("Error: Process PID=%d not found.\n", pid);
             } else {
-                static int tid_counter = 1000; // Simple TID generator
-                create_thread(&process->threads, tid_counter++, time_required, dummy_thread_task, NULL, "User Thread",
+                static int tid_counter = 1050; // Simple TID generator
+                char thread_name[256];
+                sprintf(thread_name, "%s_thread_%d", process->command, ++process->thread_count);
+                create_thread(&process->threads, tid_counter++, time_required, dummy_thread_task, NULL, thread_name,
                               true);
             }
         }

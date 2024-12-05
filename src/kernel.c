@@ -9,8 +9,9 @@
 void initialize_kernel() {
     initialize_process_queue();
 
-    static int pid_counter = 1;
-    static int tid_counter = 1000;
+    static int system_pid_counter = 1; // Start PID from 1 for system processes
+    static int user_pid_counter = 100; // Start PID from 100 for user processes
+    static int tid_counter = 1000; // Start TID from 1000 for system threads
 
     // Seed the random number generator
     srand(time(NULL));
@@ -40,12 +41,13 @@ void initialize_kernel() {
         if (system_processes[i].is_infinite) {
             time_remaining = -1;
         } else {
-            // Assign random time between 5 and 20 units
-            time_remaining = 5 + rand() % 16; // Random time between 5 and 20
+            // Assign random time between 5 and 300 units
+            time_remaining = 5 + rand() % 300; // Random time between 5 and 300
         }
 
-        create_process(pid_counter++, 0, system_processes[i].uid, time_remaining, system_processes[i].command, false);
-        Process *proc = find_process_by_pid(pid_counter - 1);
+        int pid = system_processes[i].uid == 0 ? system_pid_counter++ : user_pid_counter++;
+        create_process(pid, 0, system_processes[i].uid, time_remaining, system_processes[i].command, false);
+        Process *proc = find_process_by_pid(pid);
 
         // Each process has multiple threads
         int num_threads = 1 + rand() % 3; // Random number of threads between 1 and 3
@@ -61,6 +63,7 @@ void initialize_kernel() {
                 thread_time_remaining = 5 + rand() % 11; // Random time between 5 and 15
             }
 
+            proc->thread_count++;
             create_thread(&proc->threads, tid_counter++, thread_time_remaining, system_process_function, NULL,
                           thread_name, false);
         }

@@ -13,7 +13,7 @@ void initialize_thread_queue(ThreadQueue *queue) {
 
 void create_thread(ThreadQueue *queue, int tid, int time_required, void (*function)(void *), void *arg,
                    const char *command, bool will_print) {
-    Thread *new_thread = (Thread *) malloc(sizeof(Thread));
+    Thread *new_thread = malloc(sizeof(Thread));
     if (new_thread == NULL) {
         printf("Error: Failed to allocate memory for thread.\n");
         return;
